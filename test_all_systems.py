@@ -10,7 +10,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 load_dotenv()
 
 # Import components
-from companion_ai.llm_interface import generate_response, generate_groq_response, generate_ollama_response
+from companion_ai.llm_interface import generate_response, generate_groq_response
 from companion_ai.memory import init_db, upsert_profile_fact, add_summary, add_insight, get_all_profile_facts
 
 def test_groq():
@@ -18,10 +18,7 @@ def test_groq():
     response = generate_groq_response("Hello, this is a Groq test!")
     print(f"Groq Response: {response}")
 
-def test_ollama():
-    print("\n=== TESTING OLLAMA ===")
-    response = generate_ollama_response("Hello, this is an Ollama test!")
-    print(f"Ollama Response: {response}")
+
 
 def test_memory():
     print("\n=== TESTING MEMORY ===")
@@ -59,7 +56,6 @@ if __name__ == "__main__":
     
     # Run tests
     test_groq()
-    test_ollama()
     test_memory()
     test_tts()
     test_full_flow()

@@ -59,8 +59,8 @@ print(f"INFO: Loading Whisper model '{WHISPER_MODEL}'...")
 whisper_model = whisper.load_model(WHISPER_MODEL, device=DEVICE)
 print("INFO: Whisper model loaded.")
 
-from companion_ai.memory import init_db, get_all_profile_facts, get_latest_summary, get_latest_insights
-init_db()
+from companion_ai import memory as db
+db.init_db()
 pya = pyaudio.PyAudio()
 
 # --- Dedicated Audio Playback Class ---
