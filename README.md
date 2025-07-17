@@ -1,31 +1,32 @@
-# Companion AI v2.0
+# Companion AI v2.1
 
-An advanced conversational AI companion with persistent memory, natural conversation flow, and evolving personality. Built with DeepSeek R1 for high-quality reasoning and contextual awareness.
+An advanced conversational AI companion with persistent memory, natural conversation flow, and evolving personality. Features a modern Copilot-inspired interface and Azure TTS integration.
 
 ## 🌟 Key Features
 
 ### 🧠 **Intelligent Memory System**
 - **Persistent Memory**: Remembers conversations, preferences, and insights across sessions
-- **Relevance-Based Retrieval**: Finds relevant memories based on conversation context, not just recent ones
-- **Smart Storage**: Importance-weighted memory with automatic cleanup and deduplication
+- **Smart Storage**: Importance-weighted memory with automatic cleanup
 - **Contextual Awareness**: Uses memory subtly to inform responses without being pushy
+- **Session Logging**: Automatic conversation logs for review
 
-### 💬 **Natural Conversation**
-- **DeepSeek R1 Integration**: Advanced reasoning with transparent thinking process
-- **Adaptive Personality**: Evolves naturally through interactions while maintaining core traits
-- **Context-Aware Responses**: References past conversations only when appropriate
-- **Human-like Flow**: Responds to what you're saying NOW, not forcing past topics
+### 💬 **Living AI Personality**
+- **Emotional Intelligence**: Genuine emotions that respond to conversation context
+- **Playful & Caring**: Mischievous personality with tsundere elements
+- **Adaptive Responses**: Reads the room and matches your energy naturally
+- **Evolving Bond**: Grows closer through shared experiences
 
-### 🖥️ **Modern Interface**
-- **Clean GUI**: Modern tkinter interface with dark theme
-- **Thinking Toggle**: Show/hide AI reasoning process
-- **Real-time Processing**: Threaded responses for smooth interaction
-- **Memory Insights**: View conversation statistics and stored memories
+### 🖥️ **Modern Copilot-Style Interface**
+- **Clean Design**: GitHub Copilot-inspired dark theme
+- **Quick Actions**: One-click conversation starters and tools
+- **Responsive Layout**: Adapts to different window sizes
+- **Keyboard Shortcuts**: Enter to send, Ctrl+N to clear, Escape to focus input
 
-### 🎤 **Voice Capabilities** (Ready for Azure TTS)
-- **Speech Recognition**: Convert speech to text
-- **Audio Processing**: Smart microphone calibration and noise handling
-- **Azure Integration**: Ready for high-quality text-to-speech
+### 🎤 **Azure TTS Integration**
+- **High-Quality Voices**: Phoebe and Ava Dragon HD Latest voices
+- **Natural Speech**: Mood-based voice adjustments and natural pacing
+- **Smart Text Processing**: Handles abbreviations and emotional delivery
+- **Voice Controls**: Easy toggle and voice selection
 
 ## 🚀 Quick Start
 
@@ -57,14 +58,13 @@ An advanced conversational AI companion with persistent memory, natural conversa
 
 4. **Run the application**
    ```bash
-   # Modern GUI (Recommended)
-   python gui_app.py
+   # Modern Copilot-Style GUI (Recommended)
+   python copilot_gui.py
    
-   # Alternative text interface
-   python gui.py
-   
-   # Voice-enabled mode
-   python main.py
+   # Alternative interfaces
+   python gui_app.py    # Original modern GUI
+   python gui.py        # Text interface
+   python main.py       # Voice-enabled mode
    ```
 
 ## 🎯 Usage
@@ -94,11 +94,13 @@ Companion-V.2/
 │   ├── llm_interface.py   # DeepSeek R1 integration
 │   ├── memory.py          # Database operations
 │   ├── memory_ai.py       # AI-powered memory processing
+│   ├── tts_manager.py     # Azure TTS integration
 │   └── __init__.py
 ├── data/                  # SQLite database storage
 │   └── companion_ai.db    # Persistent memory database
-├── gui_app.py            # Modern GUI (Recommended)
-├── gui.py                # Alternative text interface
+├── copilot_gui.py        # Modern Copilot-Style GUI (Recommended)
+├── gui_app.py            # Original modern GUI
+├── gui.py                # Text interface
 ├── main.py               # Voice-enabled interface
 ├── calibrate_mic.py      # Audio calibration
 ├── list_audio_devices.py # Audio device management

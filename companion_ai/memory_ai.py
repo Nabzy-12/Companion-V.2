@@ -17,26 +17,26 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Configuration
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MEMORY_API_KEY = os.getenv("GROQ_MEMORY_API_KEY")
 
-# Client setup
-groq_client = None
-if GROQ_API_KEY:
+# Client setup - Dedicated memory processing client
+groq_memory_client = None
+if GROQ_MEMORY_API_KEY:
     try:
-        groq_client = Groq(api_key=GROQ_API_KEY)
-        logger.info("Memory AI: Groq client initialized")
+        groq_memory_client = Groq(api_key=GROQ_MEMORY_API_KEY)
+        logger.info("Memory AI: Dedicated Groq client initialized")
     except Exception as e:
         logger.error(f"Memory AI initialization failed: {str(e)}")
 
 def generate_memory_response(prompt: str, temperature: float = 0.3) -> str:
-    """Generate response using Groq with analytical model for memory tasks."""
-    if not groq_client:
+    """Generate response using dedicated Groq client for memory tasks."""
+    if not groq_memory_client:
         return ""
     
     try:
-        response = groq_client.chat.completions.create(
+        response = groq_memory_client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="deepseek-r1-distill-llama-70b",  # Use DeepSeek R1 for consistency
+            model="llama-3.1-8b-instant",  # Use faster model for memory processing
             temperature=temperature,  # Lower temperature for more consistent memory analysis
             max_tokens=512,
             top_p=0.9,
@@ -49,34 +49,59 @@ def generate_memory_response(prompt: str, temperature: float = 0.3) -> str:
 
 def analyze_conversation_importance(user_msg: str, ai_msg: str, context: dict) -> float:
     """Analyze how important this conversation is for memory storage."""
-    prompt = f"""Analyze this conversation exchange and rate its importance for long-term memory on a scale of 0.0 to 1.0.
+    prompt = f"""Analyze this conversation exchange and rate its importance for long-term memory.
 
-Consider:
-- Personal information revealed
-- Emotional significance
-- Unique insights or preferences
-- Recurring themes
-- Practical information
+IMPORTANCE CRITERIA:
+- Personal information revealed (0.7-1.0)
+- Emotional significance (0.6-0.9) 
+- Unique insights or preferences (0.5-0.8)
+- Technical discussions (0.4-0.7)
+- Casual greetings (0.1-0.3)
+- Simple questions (0.2-0.4)
 
 User: {user_msg}
 AI: {ai_msg}
 
-Context: {json.dumps(context, indent=2)}
-
-Return ONLY a number between 0.0 and 1.0 representing importance:"""
+Respond with ONLY the importance score as a decimal number (e.g., 0.7):"""
 
     try:
         response = generate_memory_response(prompt, temperature=0.1)
-        # Extract number from response
+        logger.info(f"Importance analysis response: {response}")
+        
+        # Clean response and extract number
         import re
-        match = re.search(r'(\d+\.?\d*)', response)
+        # Remove thinking tags if present
+        clean_response = re.sub(r'<think>.*?</think>', '', response, flags=re.DOTALL)
+        
+        # Look for decimal numbers
+        match = re.search(r'(\d*\.?\d+)', clean_response.strip())
         if match:
             score = float(match.group(1))
+            # If score is > 1, assume it's out of 10 and convert
+            if score > 1.0:
+                score = score / 10.0
             return min(max(score, 0.0), 1.0)  # Clamp between 0 and 1
-    except:
-        pass
+        
+        logger.warning(f"Could not extract importance score from: {response}")
+    except Exception as e:
+        logger.error(f"Importance analysis failed: {e}")
     
-    return 0.5  # Default moderate importance
+    # Fallback: simple heuristic based on message content
+    combined_text = f"{user_msg} {ai_msg}".lower()
+    
+    # High importance indicators
+    if any(word in combined_text for word in ['favorite', 'prefer', 'like', 'love', 'hate', 'remember', 'important']):
+        return 0.7
+    
+    # Medium importance indicators  
+    if any(word in combined_text for word in ['project', 'work', 'coding', 'programming', 'ai', 'think']):
+        return 0.5
+    
+    # Low importance (greetings, simple responses)
+    if any(word in combined_text for word in ['hello', 'hi', 'hey', 'thanks', 'ok', 'yes', 'no']):
+        return 0.2
+    
+    return 0.4  # Default moderate-low importance
 
 def extract_smart_profile_facts(user_msg: str, ai_msg: str) -> dict:
     """Extract profile facts with confidence scoring."""
@@ -182,3 +207,61 @@ Importance: {importance_score}
 Generate a concise insight (1-2 sentences) that reveals something meaningful about the user:"""
 
     return generate_memory_response(prompt, temperature=0.5)
+
+def enhance_conversation_context(user_msg: str, current_context: dict) -> dict:
+    """Enhance conversation context with relevant memories before AI responds."""
+    
+    # Extract keywords from user message for relevant memory retrieval
+    keywords = [word.lower() for word in user_msg.split() if len(word) > 3][:3]
+    
+    # Import memory functions
+    from companion_ai import memory as db
+    
+    # Get relevant memories based on user's current message
+    relevant_summaries = db.get_relevant_summaries(keywords, 5)
+    relevant_insights = db.get_relevant_insights(keywords, 8)
+    all_profile_facts = db.get_all_profile_facts()
+    
+    # Analyze what additional context might be helpful
+    context_analysis_prompt = f"""Analyze this user message and determine what additional context would be most helpful for responding naturally.
+
+User Message: {user_msg}
+
+Available Context:
+- Profile Facts: {len(all_profile_facts)} facts available
+- Relevant Summaries: {len(relevant_summaries)} summaries found
+- Relevant Insights: {len(relevant_insights)} insights found
+
+Current Keywords: {keywords}
+
+Should the AI reference any specific memories or context to respond naturally? 
+Respond with 'YES' if specific context is needed, 'NO' if the message is self-contained:"""
+    
+    try:
+        context_needed = generate_memory_response(context_analysis_prompt, temperature=0.2)
+        logger.info(f"Context analysis: {context_needed}")
+        
+        # Build enhanced context (exclude analysis from conversational context)
+        enhanced_context = {
+            "profile": all_profile_facts,
+            "summaries": relevant_summaries,
+            "insights": relevant_insights,
+            # Don't include context_analysis in conversational context
+            "keywords_used": keywords
+        }
+        
+        # Log the analysis separately for debugging
+        logger.info(f"Memory analysis result: {context_needed.strip()}")
+        
+        return enhanced_context
+        
+    except Exception as e:
+        logger.error(f"Context enhancement failed: {e}")
+        # Fallback to basic context
+        return {
+            "profile": all_profile_facts,
+            "summaries": relevant_summaries[:3],  # Limit if error
+            "insights": relevant_insights[:5],
+            "context_analysis": "BASIC",
+            "keywords_used": keywords
+        }
