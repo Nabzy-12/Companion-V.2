@@ -1,6 +1,6 @@
-# Companion AI v2.1
+# Companion AI v2.2
 
-An advanced conversational AI companion with persistent memory, natural conversation flow, and evolving personality. Features a modern Copilot-inspired interface and Azure TTS integration.
+An advanced AI companion system with authentic personalities, emotional intelligence, and persistent memory. Features both modern web portal and desktop interfaces with voice integration.
 
 ## 🌟 Key Features
 
@@ -58,13 +58,14 @@ An advanced conversational AI companion with persistent memory, natural conversa
 
 4. **Run the application**
    ```bash
-   # Modern Copilot-Style GUI (Recommended)
+   # Web Portal (Recommended)
+   python web_companion.py
+   
+   # Desktop GUI
    python copilot_gui.py
    
-   # Alternative interfaces
-   python gui_app.py    # Original modern GUI
-   python gui.py        # Text interface
-   python main.py       # Voice-enabled mode
+   # Memory Viewer Utility
+   python view_memory.py
    ```
 
 ## 🎯 Usage

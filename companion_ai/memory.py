@@ -460,3 +460,25 @@ def smart_memory_cleanup():
     stats = get_memory_stats()
     print(f"🧠 Cleanup complete. Stats: {stats['summaries']} summaries, {stats['insights']} insights, {stats['profile_facts']} profile facts")
     return stats
+
+def clear_all_memory():
+    """Clear all memory data from the database."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Clear all tables (using correct table names)
+        cursor.execute("DELETE FROM user_profile")
+        cursor.execute("DELETE FROM conversation_summaries") 
+        cursor.execute("DELETE FROM ai_insights")
+        cursor.execute("DELETE FROM memory_consolidation")
+        
+        conn.commit()
+        print("🧹 All memory data cleared successfully")
+        
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ Failed to clear memory: {e}")
+        raise e
+    finally:
+        conn.close()

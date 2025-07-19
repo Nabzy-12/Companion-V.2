@@ -23,6 +23,7 @@ class AzureTTSManager:
         self.speech_config = None
         self.synthesizer = None
         self.is_enabled = False
+        self.current_synthesis = None  # Track current synthesis for interruption
         
         # Voice settings - Phoebe Dragon with natural pace
         self.current_voice = "en-US-Phoebe:DragonHDLatestNeural"  # Phoebe Dragon HD Latest
@@ -96,7 +97,10 @@ class AzureTTSManager:
                 # Asynchronous speech
                 def speak_async():
                     try:
-                        result = self.synthesizer.speak_ssml_async(adjusted_ssml).get()
+                        # Store the synthesis task for potential interruption
+                        self.current_synthesis = self.synthesizer.speak_ssml_async(adjusted_ssml)
+                        result = self.current_synthesis.get()
+                        
                         if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
                             logger.info("TTS completed successfully")
                         else:
@@ -108,6 +112,8 @@ class AzureTTSManager:
                                     logger.error(f"TTS error details: {cancellation.error_details}")
                     except Exception as e:
                         logger.error(f"Async TTS error: {e}")
+                    finally:
+                        self.current_synthesis = None
                 
                 threading.Thread(target=speak_async, daemon=True).start()
                 return True
@@ -115,6 +121,17 @@ class AzureTTSManager:
         except Exception as e:
             logger.error(f"TTS speak_text failed: {e}")
             return False
+    
+    def stop_current_speech(self):
+        """Stop any currently playing speech"""
+        try:
+            if self.current_synthesis:
+                # Cancel the current synthesis
+                self.current_synthesis.cancel()
+                self.current_synthesis = None
+                logger.info("Current TTS speech stopped")
+        except Exception as e:
+            logger.error(f"Error stopping TTS: {e}")
     
     def _create_ssml(self, text: str) -> str:
         """Create SSML markup with voice, rate, pitch, and volume settings"""

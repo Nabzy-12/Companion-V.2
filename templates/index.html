@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Companion AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+            color: #f0f6fc;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #21262d;
+            border-right: 1px solid #30363d;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #161b22;
+            padding: 20px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .header h1 {
+            color: #58a6ff;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #8b949e;
+            font-size: 14px;
+        }
+
+        .chat-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #0d1117;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            margin-left: auto;
+        }
+
+        .message.ai {
+            margin-right: auto;
+        }
+
+        .message-header {
+            font-size: 12px;
+            color: #8b949e;
+            margin-bottom: 5px;
+        }
+
+        .message-content {
+            padding: 15px;
+            border-radius: 12px;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: #58a6ff;
+            color: white;
+        }
+
+        .message.ai .message-content {
+            background: #21262d;
+            border: 1px solid #30363d;
+        }
+
+        .input-area {
+            padding: 20px;
+            background: #161b22;
+            border-top: 1px solid #30363d;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-field {
+            flex: 1;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 12px;
+            color: #f0f6fc;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 44px;
+            max-height: 120px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
+        .send-btn {
+            background: #58a6ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .send-btn:hover {
+            background: #1f6feb;
+        }
+
+        .send-btn:disabled {
+            background: #6e7681;
+            cursor: not-allowed;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #8b949e;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .control-group select {
+            width: 100%;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 8px;
+            color: #f0f6fc;
+            font-size: 14px;
+        }
+
+        .btn {
+            width: 100%;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 10px;
+            color: #f0f6fc;
+            cursor: pointer;
+            margin-bottom: 8px;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #30363d;
+        }
+
+        .btn.danger {
+            border-color: #f85149;
+            color: #f85149;
+        }
+
+        .btn.danger:hover {
+            background: #f85149;
+            color: white;
+        }
+
+        .memory-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #30363d;
+        }
+
+        .memory-section h3 {
+            color: #58a6ff;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .memory-item {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .memory-item strong {
+            color: #58a6ff;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 200px;
+            }
+            
+            .message {
+                max-width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="controls">
+                <div class="control-group">
+                    <label>Persona</label>
+                    <select id="persona">
+                        <option value="Aether">Aether</option>
+                        <option value="Lilith" selected>Lilith</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>Model</label>
+                    <select id="model">
+                        <option value="deepseek-r1-distill-llama-70b">DeepSeek R1</option>
+                        <option value="llama-3.3-70b-versatile">Llama 70B</option>
+                        <option value="moonshotai/kimi-k2-instruct" selected>Kimi K2</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>Voice</label>
+                    <select id="voice">
+                        <option value="Phoebe Dragon HD" selected>Phoebe Dragon HD</option>
+                        <option value="Ava Dragon HD">Ava Dragon HD</option>
+                    </select>
+                </div>
+                
+                <button class="btn" onclick="toggleTTS()">🔊 Toggle Voice</button>
+                <button class="btn" onclick="viewMemory()">📋 View Memory</button>
+                <button class="btn" onclick="clearChat()">💬 Clear Chat</button>
+                <button class="btn danger" onclick="clearMemory()">🗑️ Clear Memory</button>
+            </div>
+            
+            <div class="memory-section">
+                <h3>Recent Memory</h3>
+                <div id="memory-preview">
+                    <div class="memory-item">Memory will appear here after conversations...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-chat">
+            <div class="header">
+                <h1>Companion AI</h1>
+                <p>Your AI companion is ready to chat</p>
+            </div>
+            
+            <div class="chat-area" id="chat-area">
+                <div class="message ai">
+                    <div class="message-header">Lilith • Just now</div>
+                    <div class="message-content">
+                        Hey there. What should we dive into today?
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <div class="input-container">
+                    <textarea 
+                        id="message-input" 
+                        class="input-field" 
+                        placeholder="Message Companion AI..."
+                        rows="1"
+                    ></textarea>
+                    <button class="send-btn" onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isLoading = false;
+
+        // Auto-resize textarea
+        const messageInput = document.getElementById('message-input');
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Send message on Enter (Shift+Enter for new line)
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            if (isLoading) return;
+            
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            const persona = document.getElementById('persona').value;
+            const model = document.getElementById('model').value;
+            
+            // Add user message to chat
+            addMessage('user', message);
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            
+            // Show loading
+            isLoading = true;
+            document.body.classList.add('loading');
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        persona: persona,
+                        model: model
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addMessage('ai', data.response);
+                    updateMemoryPreview();
+                } else {
+                    addMessage('system', `Error: ${data.error}`);
+                }
+            } catch (error) {
+                addMessage('system', `Network error: ${error.message}`);
+            } finally {
+                isLoading = false;
+                document.body.classList.remove('loading');
+            }
+        }
+
+        function addMessage(type, content) {
+            const chatArea = document.getElementById('chat-area');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const senderName = type === 'user' ? 'You' : (type === 'ai' ? document.getElementById('persona').value : 'System');
+            
+            messageDiv.innerHTML = `
+                <div class="message-header">${senderName} • ${timeStr}</div>
+                <div class="message-content">${content}</div>
+            `;
+            
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        async function updateMemoryPreview() {
+            try {
+                const response = await fetch('/api/memory');
+                const data = await response.json();
+                
+                const preview = document.getElementById('memory-preview');
+                preview.innerHTML = '';
+                
+                // Show recent profile facts
+                const profileEntries = Object.entries(data.profile || {}).slice(0, 3);
+                profileEntries.forEach(([key, value]) => {
+                    const item = document.createElement('div');
+                    item.className = 'memory-item';
+                    item.innerHTML = `<strong>${key.replace(/_/g, ' ')}:</strong> ${value}`;
+                    preview.appendChild(item);
+                });
+                
+                if (profileEntries.length === 0) {
+                    preview.innerHTML = '<div class="memory-item">No memory data yet...</div>';
+                }
+            } catch (error) {
+                console.error('Failed to update memory preview:', error);
+            }
+        }
+
+        async function toggleTTS() {
+            try {
+                const response = await fetch('/api/tts/toggle', { method: 'POST' });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addMessage('system', `Voice ${data.enabled ? 'enabled' : 'disabled'}`);
+                }
+            } catch (error) {
+                addMessage('system', `TTS error: ${error.message}`);
+            }
+        }
+
+        async function clearMemory() {
+            if (!confirm('Are you sure you want to clear all memory? This cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/memory/clear', { method: 'POST' });
+                
+                if (response.ok) {
+                    addMessage('system', '🧹 Memory cleared successfully!');
+                    updateMemoryPreview();
+                } else {
+                    const data = await response.json();
+                    addMessage('system', `Failed to clear memory: ${data.error}`);
+                }
+            } catch (error) {
+                addMessage('system', `Network error: ${error.message}`);
+            }
+        }
+
+        function clearChat() {
+            const chatArea = document.getElementById('chat-area');
+            chatArea.innerHTML = `
+                <div class="message ai">
+                    <div class="message-header">Lilith • Just now</div>
+                    <div class="message-content">
+                        Hey there. What should we dive into today?
+                    </div>
+                </div>
+            `;
+        }
+
+        function viewMemory() {
+            window.open('/api/memory', '_blank');
+        }
+
+        // Voice change handler
+        document.getElementById('voice').addEventListener('change', async function() {
+            try {
+                const response = await fetch('/api/voice/change', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ voice: this.value })
+                });
+                
+                if (response.ok) {
+                    addMessage('system', `Voice changed to ${this.value}`);
+                }
+            } catch (error) {
+                addMessage('system', `Voice change error: ${error.message}`);
+            }
+        });
+
+        // Load memory preview on startup
+        updateMemoryPreview();
+    </script>
+</body>
+</html>

@@ -21,8 +21,8 @@ class CopilotCompanionGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Companion AI")
-        self.root.geometry("900x700")
-        self.root.minsize(600, 500)  # Set minimum window size
+        self.root.geometry("900x750")  # Increased height to ensure input area is visible
+        self.root.minsize(700, 600)  # Increased minimum size to prevent UI elements from being hidden
         
         # Modern dark theme colors (Copilot-inspired)
         self.colors = {
@@ -49,6 +49,12 @@ class CopilotCompanionGUI:
         self.conversation_log = []
         self.show_thinking = tk.BooleanVar(value=False)
         self.tts_enabled = tk.BooleanVar(value=tts_manager.is_enabled)
+        
+        # Model selection
+        self.current_model = "moonshotai/kimi-k2-instruct"  # Default model (Kimi)
+        
+        # Persona selection
+        self.current_persona = "Aether"  # Default persona
         
         self.setup_ui()
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -86,9 +92,17 @@ class CopilotCompanionGUI:
         header_frame = tk.Frame(parent, bg=self.colors['bg_primary'])
         header_frame.pack(fill=tk.X, pady=(0, 20))
         
+        # Main header content
+        header_content = tk.Frame(header_frame, bg=self.colors['bg_primary'])
+        header_content.pack(fill=tk.X)
+        
+        # Left side - Title and subtitle
+        title_frame = tk.Frame(header_content, bg=self.colors['bg_primary'])
+        title_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
         # Title (responsive font size)
         self.title_label = tk.Label(
-            header_frame,
+            title_frame,
             text="Hi there. What should we dive into today?",
             font=('Segoe UI', 24, 'normal'),
             bg=self.colors['bg_primary'],
@@ -98,13 +112,128 @@ class CopilotCompanionGUI:
         
         # Subtitle
         self.subtitle_label = tk.Label(
-            header_frame,
+            title_frame,
             text="Your AI companion is ready to help with anything you need.",
             font=('Segoe UI', 12),
             bg=self.colors['bg_primary'],
             fg=self.colors['text_secondary']
         )
         self.subtitle_label.pack(anchor='w', pady=(5, 0))
+        
+        # Right side - Settings
+        settings_frame = tk.Frame(header_content, bg=self.colors['bg_primary'])
+        settings_frame.pack(side=tk.RIGHT, padx=(20, 0))
+        
+        # Voice selection
+        voice_label = tk.Label(
+            settings_frame,
+            text="Voice:",
+            font=('Segoe UI', 10),
+            bg=self.colors['bg_primary'],
+            fg=self.colors['text_secondary']
+        )
+        voice_label.pack(anchor='w')
+        
+        self.voice_var = tk.StringVar(value="Phoebe Dragon HD")
+        voice_options = ["Phoebe Dragon HD", "Ava Dragon HD"]
+        self.voice_dropdown = tk.OptionMenu(
+            settings_frame,
+            self.voice_var,
+            *voice_options,
+            command=self.change_voice
+        )
+        self.voice_dropdown.configure(
+            bg=self.colors['bg_secondary'],
+            fg=self.colors['text_primary'],
+            activebackground=self.colors['bg_tertiary'],
+            activeforeground=self.colors['text_primary'],
+            highlightthickness=0,
+            relief='flat',
+            font=('Segoe UI', 9),
+            width=15
+        )
+        # Style the dropdown menu
+        self.voice_dropdown['menu'].configure(
+            bg=self.colors['bg_secondary'],
+            fg=self.colors['text_primary'],
+            activebackground=self.colors['accent_blue'],
+            activeforeground='white'
+        )
+        self.voice_dropdown.pack(anchor='w', pady=(2, 10))
+        
+        # Model selection
+        model_label = tk.Label(
+            settings_frame,
+            text="Model:",
+            font=('Segoe UI', 10),
+            bg=self.colors['bg_primary'],
+            fg=self.colors['text_secondary']
+        )
+        model_label.pack(anchor='w')
+        
+        self.model_var = tk.StringVar(value="Kimi K2")
+        model_options = ["DeepSeek R1", "Llama 70B", "Kimi K2"]
+        self.model_dropdown = tk.OptionMenu(
+            settings_frame,
+            self.model_var,
+            *model_options,
+            command=self.change_model
+        )
+        self.model_dropdown.configure(
+            bg=self.colors['bg_secondary'],
+            fg=self.colors['text_primary'],
+            activebackground=self.colors['bg_tertiary'],
+            activeforeground=self.colors['text_primary'],
+            highlightthickness=0,
+            relief='flat',
+            font=('Segoe UI', 9),
+            width=15
+        )
+        # Style the dropdown menu
+        self.model_dropdown['menu'].configure(
+            bg=self.colors['bg_secondary'],
+            fg=self.colors['text_primary'],
+            activebackground=self.colors['accent_blue'],
+            activeforeground='white'
+        )
+        self.model_dropdown.pack(anchor='w', pady=(2, 10))
+        
+        # Persona selection
+        persona_label = tk.Label(
+            settings_frame,
+            text="Persona:",
+            font=('Segoe UI', 10),
+            bg=self.colors['bg_primary'],
+            fg=self.colors['text_secondary']
+        )
+        persona_label.pack(anchor='w')
+        
+        self.persona_var = tk.StringVar(value="Aether")
+        persona_options = ["Aether", "Lilith"]
+        self.persona_dropdown = tk.OptionMenu(
+            settings_frame,
+            self.persona_var,
+            *persona_options,
+            command=self.change_persona
+        )
+        self.persona_dropdown.configure(
+            bg=self.colors['bg_secondary'],
+            fg=self.colors['text_primary'],
+            activebackground=self.colors['bg_tertiary'],
+            activeforeground=self.colors['text_primary'],
+            highlightthickness=0,
+            relief='flat',
+            font=('Segoe UI', 9),
+            width=15
+        )
+        # Style the dropdown menu
+        self.persona_dropdown['menu'].configure(
+            bg=self.colors['bg_secondary'],
+            fg=self.colors['text_primary'],
+            activebackground=self.colors['accent_blue'],
+            activeforeground='white'
+        )
+        self.persona_dropdown.pack(anchor='w', pady=(2, 0))
         
     def create_chat_area(self, parent):
         """Create the main chat display area"""
@@ -133,7 +262,7 @@ class CopilotCompanionGUI:
             padx=20,
             pady=20,
             selectbackground=self.colors['bg_secondary'],
-            height=15  # Limit height to make room for other elements
+            height=12  # Reduced height to ensure input area is always visible
         )
         self.chat_display.pack(fill=tk.BOTH, expand=True)
         
@@ -156,21 +285,20 @@ class CopilotCompanionGUI:
         self.actions_frame = tk.Frame(parent, bg=self.colors['bg_primary'])
         self.actions_frame.pack(fill=tk.X, pady=(0, 20))
         
-        # Quick action buttons (2 rows like Copilot)
+        # Quick action buttons (better organized)
         self.actions_data = [
-            # First row
+            # First row - Memory & Analysis
             [
-                ("Start conversation", self.start_conversation),
-                ("Review memory", self.review_memory),
-                ("Set focus", self.set_focus),
-                ("Debug issue", self.debug_mode)
+                ("View Memory", self.review_memory),
+                ("Get Insights", self.get_insights),
+                ("Export Memory", self.export_memory),
+                ("Clear Memory", self.clear_memory)
             ],
-            # Second row  
+            # Second row - Chat & Settings
             [
-                ("Get insights", self.get_insights),
-                ("Summarize chat", self.summarize_chat),
-                ("Voice settings", self.voice_settings),
-                ("Clear memory", self.clear_memory)
+                ("Summarize Chat", self.summarize_chat),
+                ("Voice Settings", self.voice_settings),
+                ("Clear Chat", self.clear_chat)
             ]
         ]
         
@@ -254,7 +382,7 @@ class CopilotCompanionGUI:
         button_frame = tk.Frame(input_frame, bg=self.colors['bg_tertiary'])
         button_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=(15, 0))
         
-        # Voice button
+        # Voice button (rounded style)
         self.voice_btn = tk.Button(
             button_frame,
             text="♪",
@@ -266,25 +394,25 @@ class CopilotCompanionGUI:
             activeforeground=self.colors['text_primary'],
             relief='flat',
             bd=0,
-            width=3,
-            height=1,
+            width=4,
+            height=2,
             cursor='hand2'
         )
-        self.voice_btn.pack(pady=(0, 5))
+        self.voice_btn.pack(pady=(5, 10))
         
-        # Send button
+        # Send button (larger, rounded style)
         self.send_btn = tk.Button(
             button_frame,
-            text="↗",
+            text="Send",
             command=self.send_message,
-            font=('Segoe UI', 16, 'bold'),
+            font=('Segoe UI', 11, 'bold'),
             bg=self.colors['accent_blue'],
             fg='white',
             activebackground=self.colors['button_hover'],
             activeforeground='white',
             relief='flat',
             bd=0,
-            width=3,
+            width=6,
             height=2,
             cursor='hand2'
         )
@@ -368,6 +496,10 @@ Try one of the quick actions above, or just start typing below!"""
         # Check if it's placeholder text or empty
         if not message or message == self.placeholder_text:
             return
+        
+        # Stop any currently playing TTS
+        if tts_manager.is_enabled:
+            tts_manager.stop_current_speech()
             
         # Clear input and leave it empty (no placeholder)
         self.message_entry.delete("1.0", tk.END)
@@ -391,8 +523,8 @@ Try one of the quick actions above, or just start typing below!"""
                     "insights": []
                 }
                 
-                # Generate response
-                response = generate_response(message, memory_context)
+                # Generate response with selected model and persona
+                response = generate_response(message, memory_context, self.current_model, self.current_persona)
                 
                 # Store conversation
                 from datetime import datetime
@@ -434,47 +566,12 @@ Try one of the quick actions above, or just start typing below!"""
         self.send_btn.config(state=tk.NORMAL, text="↗")
     
     # Quick action methods
-    def start_conversation(self):
-        """Start a conversation prompt"""
-        self.message_entry.delete("1.0", tk.END)
-        self.message_entry.insert("1.0", "Hi! I'd like to have a conversation about ")
-        self.message_entry.configure(fg=self.colors['text_primary'])
-        self.message_entry.focus()
-        self.message_entry.mark_set(tk.INSERT, "1.end-1c")
     
     def review_memory(self):
-        """Review memory command"""
-        profile = db.get_all_profile_facts()
-        summaries = db.get_latest_summary(3)
-        insights = db.get_latest_insights(3)
-        
-        memory_text = f"Memory Overview:\n\n"
-        memory_text += f"Profile facts: {len(profile)} items\n"
-        memory_text += f"Recent summaries: {len(summaries)} items\n"
-        memory_text += f"Recent insights: {len(insights)} items\n"
-        
-        if profile:
-            memory_text += "\nYour Profile:\n"
-            for key, value in list(profile.items())[:5]:  # Show first 5
-                memory_text += f"• {key}: {value}\n"
-        
-        self.add_message("System", memory_text, "system")
+        """Open detailed memory viewer window"""
+        self.open_memory_viewer()
     
-    def set_focus(self):
-        """Set focus/context for conversation"""
-        self.message_entry.delete("1.0", tk.END)
-        self.message_entry.insert("1.0", "Let's focus our conversation on ")
-        self.message_entry.configure(fg=self.colors['text_primary'])
-        self.message_entry.focus()
-        self.message_entry.mark_set(tk.INSERT, "1.end-1c")
-    
-    def debug_mode(self):
-        """Debug mode prompt"""
-        self.message_entry.delete("1.0", tk.END)
-        self.message_entry.insert("1.0", "I'm having trouble with ")
-        self.message_entry.configure(fg=self.colors['text_primary'])
-        self.message_entry.focus()
-        self.message_entry.mark_set(tk.INSERT, "1.end-1c")
+
     
     def get_insights(self):
         """Get insights from memory"""
@@ -513,6 +610,185 @@ Try one of the quick actions above, or just start typing below!"""
         
         self.add_message("System", voice_text, "system")
     
+    def open_memory_viewer(self):
+        """Open detailed memory viewer window"""
+        memory_window = tk.Toplevel(self.root)
+        memory_window.title("Memory Viewer")
+        memory_window.geometry("800x600")
+        memory_window.configure(bg=self.colors['bg_primary'])
+        
+        # Create notebook for tabs
+        notebook = ttk.Notebook(memory_window)
+        notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Configure notebook style
+        style = ttk.Style()
+        style.configure('TNotebook', background=self.colors['bg_primary'])
+        style.configure('TNotebook.Tab', background=self.colors['bg_secondary'], foreground=self.colors['text_primary'])
+        
+        # Profile Facts Tab
+        profile_frame = tk.Frame(notebook, bg=self.colors['bg_primary'])
+        notebook.add(profile_frame, text="Profile Facts")
+        
+        profile_text = scrolledtext.ScrolledText(
+            profile_frame,
+            wrap=tk.WORD,
+            font=('Segoe UI', 10),
+            bg=self.colors['bg_tertiary'],
+            fg=self.colors['text_primary'],
+            state=tk.DISABLED,
+            relief='flat',
+            bd=0,
+            padx=15,
+            pady=15
+        )
+        profile_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Summaries Tab
+        summaries_frame = tk.Frame(notebook, bg=self.colors['bg_primary'])
+        notebook.add(summaries_frame, text="Summaries")
+        
+        summaries_text = scrolledtext.ScrolledText(
+            summaries_frame,
+            wrap=tk.WORD,
+            font=('Segoe UI', 10),
+            bg=self.colors['bg_tertiary'],
+            fg=self.colors['text_primary'],
+            state=tk.DISABLED,
+            relief='flat',
+            bd=0,
+            padx=15,
+            pady=15
+        )
+        summaries_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Insights Tab
+        insights_frame = tk.Frame(notebook, bg=self.colors['bg_primary'])
+        notebook.add(insights_frame, text="Insights")
+        
+        insights_text = scrolledtext.ScrolledText(
+            insights_frame,
+            wrap=tk.WORD,
+            font=('Segoe UI', 10),
+            bg=self.colors['bg_tertiary'],
+            fg=self.colors['text_primary'],
+            state=tk.DISABLED,
+            relief='flat',
+            bd=0,
+            padx=15,
+            pady=15
+        )
+        insights_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Load and display memory data
+        self.load_memory_data(profile_text, summaries_text, insights_text)
+    
+    def load_memory_data(self, profile_widget, summaries_widget, insights_widget):
+        """Load memory data into the viewer widgets"""
+        try:
+            # Profile Facts
+            profile = db.get_all_profile_facts()
+            profile_widget.config(state=tk.NORMAL)
+            profile_widget.delete("1.0", tk.END)
+            
+            if profile:
+                profile_widget.insert(tk.END, "👤 PROFILE FACTS\n")
+                profile_widget.insert(tk.END, "=" * 40 + "\n\n")
+                for key, value in profile.items():
+                    readable_key = key.replace('_', ' ').title()
+                    profile_widget.insert(tk.END, f"• {readable_key}:\n")
+                    profile_widget.insert(tk.END, f"  {value}\n\n")
+            else:
+                profile_widget.insert(tk.END, "No profile facts stored yet.")
+            
+            profile_widget.config(state=tk.DISABLED)
+            
+            # Summaries
+            summaries = db.get_latest_summary(10)
+            summaries_widget.config(state=tk.NORMAL)
+            summaries_widget.delete("1.0", tk.END)
+            
+            if summaries:
+                summaries_widget.insert(tk.END, "📝 CONVERSATION SUMMARIES\n")
+                summaries_widget.insert(tk.END, "=" * 40 + "\n\n")
+                for i, summary in enumerate(summaries, 1):
+                    summary_text = summary.get('summary_text', 'No summary available')
+                    relevance = summary.get('relevance_score', 'N/A')
+                    summaries_widget.insert(tk.END, f"{i}. Summary (Relevance: {relevance}):\n")
+                    summaries_widget.insert(tk.END, f"{summary_text}\n\n")
+            else:
+                summaries_widget.insert(tk.END, "No summaries stored yet.")
+            
+            summaries_widget.config(state=tk.DISABLED)
+            
+            # Insights
+            insights = db.get_latest_insights(10)
+            insights_widget.config(state=tk.NORMAL)
+            insights_widget.delete("1.0", tk.END)
+            
+            if insights:
+                insights_widget.insert(tk.END, "💡 INSIGHTS\n")
+                insights_widget.insert(tk.END, "=" * 40 + "\n\n")
+                for i, insight in enumerate(insights, 1):
+                    insights_widget.insert(tk.END, f"{i}. {insight}\n\n")
+            else:
+                insights_widget.insert(tk.END, "No insights stored yet.")
+            
+            insights_widget.config(state=tk.DISABLED)
+            
+        except Exception as e:
+            logger.error(f"Error loading memory data: {e}")
+    
+    def export_memory(self):
+        """Export memory to text file"""
+        try:
+            from datetime import datetime
+            import os
+            
+            # Create exports directory if it doesn't exist
+            if not os.path.exists("exports"):
+                os.makedirs("exports")
+            
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"exports/memory_export_{timestamp}.txt"
+            
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write("COMPANION AI MEMORY EXPORT\n")
+                f.write("=" * 50 + "\n")
+                f.write(f"Exported: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+                
+                # Profile Facts
+                profile = db.get_all_profile_facts()
+                f.write("PROFILE FACTS:\n")
+                f.write("-" * 30 + "\n")
+                for key, value in profile.items():
+                    readable_key = key.replace('_', ' ').title()
+                    f.write(f"• {readable_key}: {value}\n")
+                f.write("\n")
+                
+                # Summaries
+                summaries = db.get_latest_summary(10)
+                f.write("CONVERSATION SUMMARIES:\n")
+                f.write("-" * 30 + "\n")
+                for i, summary in enumerate(summaries, 1):
+                    summary_text = summary.get('summary_text', 'No summary available')
+                    relevance = summary.get('relevance_score', 'N/A')
+                    f.write(f"{i}. Summary (Relevance: {relevance}):\n")
+                    f.write(f"   {summary_text}\n\n")
+                
+                # Insights
+                insights = db.get_latest_insights(10)
+                f.write("INSIGHTS:\n")
+                f.write("-" * 30 + "\n")
+                for i, insight in enumerate(insights, 1):
+                    f.write(f"{i}. {insight}\n\n")
+            
+            self.add_message("System", f"✅ Memory exported to: {filename}", "system")
+            
+        except Exception as e:
+            self.add_message("System", f"❌ Failed to export memory: {e}", "system")
+            logger.error(f"Memory export failed: {e}")
+    
     def clear_memory(self):
         """Clear memory with confirmation"""
         result = messagebox.askyesno(
@@ -520,8 +796,14 @@ Try one of the quick actions above, or just start typing below!"""
             "Are you sure you want to clear all memory? This cannot be undone."
         )
         if result:
-            # Add actual memory clearing logic here
-            self.add_message("System", "🧹 Memory cleared successfully!", "system")
+            try:
+                # Clear all memory from database
+                db.clear_all_memory()
+                self.add_message("System", "🧹 Memory cleared successfully!", "system")
+                logger.info("All memory cleared by user")
+            except Exception as e:
+                self.add_message("System", f"❌ Failed to clear memory: {e}", "system")
+                logger.error(f"Memory clearing failed: {e}")
     
     def toggle_voice(self):
         """Toggle voice/TTS"""
@@ -529,11 +811,51 @@ Try one of the quick actions above, or just start typing below!"""
         if self.tts_enabled.get():
             tts_manager.is_enabled = True
             self.voice_btn.configure(fg=self.colors['accent_green'])
-            self.add_message("System", "🔊 Voice enabled", "system")
+            self.add_message("System", "Voice enabled", "system")
         else:
             tts_manager.is_enabled = False
             self.voice_btn.configure(fg=self.colors['text_secondary'])
-            self.add_message("System", "🔇 Voice disabled", "system")
+            self.add_message("System", "Voice disabled", "system")
+    
+    def change_voice(self, selection):
+        """Change TTS voice based on dropdown selection"""
+        voice_mapping = {
+            "Phoebe Dragon HD": "en-US-Phoebe:DragonHDLatestNeural",
+            "Ava Dragon HD": "en-US-Ava:DragonHDLatestNeural"
+        }
+        
+        voice_name = voice_mapping.get(selection)
+        if voice_name and tts_manager.set_voice(voice_name):
+            self.add_message("System", f"Voice changed to {selection}", "system")
+            # Test the new voice
+            if tts_manager.is_enabled:
+                tts_manager.speak_text(f"Hi, this is {selection.split()[0]}", blocking=False)
+        else:
+            self.add_message("System", f"Failed to change voice to {selection}", "system")
+    
+    def change_model(self, selection):
+        """Change AI model based on dropdown selection"""
+        model_mapping = {
+            "DeepSeek R1": "deepseek-r1-distill-llama-70b",
+            "Llama 70B": "llama-3.3-70b-versatile", 
+            "Kimi K2": "moonshotai/kimi-k2-instruct"
+        }
+        
+        model_name = model_mapping.get(selection)
+        if model_name:
+            # Store the selected model for use in responses
+            self.current_model = model_name
+            self.add_message("System", f"Model changed to {selection}", "system")
+        else:
+            self.add_message("System", f"Failed to change model to {selection}", "system")
+    
+    def change_persona(self, selection):
+        """Change AI persona based on dropdown selection"""
+        if selection in ["Aether", "Lilith"]:
+            self.current_persona = selection
+            self.add_message("System", f"Persona changed to {selection}", "system")
+        else:
+            self.add_message("System", f"Failed to change persona to {selection}", "system")
     
     def on_enter_key(self, event):
         """Handle Enter key press in message entry"""
@@ -644,6 +966,8 @@ Try one of the quick actions above, or just start typing below!"""
         """Handle window closing"""
         if self.conversation_log:
             logger.info(f"Processing session memory for {len(self.conversation_log)} exchanges")
+            # Process session memory with Memory AI
+            self._process_session_memory()
             # Create session log file for review
             self._create_session_log()
         
@@ -651,9 +975,13 @@ Try one of the quick actions above, or just start typing below!"""
         self.root.destroy()
     
     def _create_session_log(self):
-        """Create a session log file with the conversation"""
+        """Create a session log file with the conversation and schedule cleanup"""
         try:
             from datetime import datetime
+            import threading
+            import os
+            import time
+            
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             log_filename = f"session_log_{timestamp}.txt"
             
@@ -672,8 +1000,89 @@ Try one of the quick actions above, or just start typing below!"""
             
             logger.info(f"Session log saved as: {log_filename}")
             
+            # Clean up old session logs (keep only the most recent one)
+            self._cleanup_old_session_logs(log_filename)
+            
         except Exception as e:
             logger.error(f"Failed to create session log: {e}")
+    
+    def _process_session_memory(self):
+        """Process session memory with Memory AI"""
+        try:
+            from companion_ai import memory_ai
+            
+            # Format conversation for analysis
+            conversation_text = ""
+            for i, exchange in enumerate(self.conversation_log, 1):
+                conversation_text += f"Exchange {i}:\n"
+                conversation_text += f"User: {exchange['user']}\n"
+                conversation_text += f"AI: {exchange['ai']}\n\n"
+            
+            # Analyze session importance
+            importance_score = memory_ai.analyze_conversation_importance(
+                conversation_text, "", {}
+            )
+            
+            logger.info(f"Session importance: {importance_score:.2f}")
+            
+            if importance_score > 0.15:
+                # Generate session summary
+                summary = memory_ai.generate_smart_summary(
+                    conversation_text, "", importance_score
+                )
+                if summary:
+                    db.add_summary(summary, relevance_score=importance_score)
+                    logger.info("Session summary stored")
+                
+                # Extract profile facts
+                facts = memory_ai.extract_smart_profile_facts(conversation_text, "")
+                if facts:
+                    for key, fact_data in facts.items():
+                        db.upsert_profile_fact(
+                            key, 
+                            fact_data['value'], 
+                            confidence=fact_data['confidence'],
+                            source='session_analysis'
+                        )
+                    logger.info(f"Profile facts stored: {list(facts.keys())}")
+                
+                # Generate insights
+                insight = memory_ai.generate_contextual_insight(
+                    conversation_text, "", {}, importance_score
+                )
+                if insight:
+                    category = memory_ai.categorize_insight(insight)
+                    db.add_insight(insight, category=category, relevance_score=importance_score)
+                    logger.info("Session insight stored")
+            else:
+                logger.info("Low importance session - minimal storage")
+                
+        except Exception as e:
+            logger.error(f"Session memory processing failed: {e}")
+    
+    def _cleanup_old_session_logs(self, current_log: str):
+        """Keep only the most recent session log, delete older ones"""
+        try:
+            import glob
+            import os
+            
+            # Find all session log files
+            session_logs = glob.glob("session_log_*.txt")
+            
+            # Remove the current log from the list
+            if current_log in session_logs:
+                session_logs.remove(current_log)
+            
+            # Delete all old session logs
+            for old_log in session_logs:
+                try:
+                    os.remove(old_log)
+                    logger.info(f"Cleaned up old session log: {old_log}")
+                except Exception as e:
+                    logger.error(f"Failed to remove {old_log}: {e}")
+                    
+        except Exception as e:
+            logger.error(f"Session log cleanup failed: {e}")
 
 def main():
     """Main function to run the Copilot-style GUI"""

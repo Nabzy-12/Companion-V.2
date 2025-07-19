@@ -36,7 +36,7 @@ def generate_memory_response(prompt: str, temperature: float = 0.3) -> str:
     try:
         response = groq_memory_client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama-3.1-8b-instant",  # Use faster model for memory processing
+            model="llama-3.3-70b-versatile",  # Use smarter model for memory processing
             temperature=temperature,  # Lower temperature for more consistent memory analysis
             max_tokens=512,
             top_p=0.9,
